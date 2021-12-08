@@ -3,7 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
+#define HEADER_SIZE 512
 /**
  * Checks whether the archive is valid.
  *
@@ -20,14 +22,56 @@
  *         -3 if the archive contains a header with an invalid checksum value
  */
 int check_archive(int tar_fd) {
-    char *c = (char *) malloc(sizeof(char));
 
-    int start_file = lseek(tar_fd,0,SEEK_SET);
-    printf("## Start of file: %d ##\n",start_file);
-    read(tar_fd, c, 100);
-    printf("Contenu du fichier : %s\n",c);
-    int end_file = lseek(tar_fd,0,SEEK_END);
-    printf("## End of file: %d ##\n",end_file);
+   // struct posix_header header;
+                                                        /* byte offset */
+   // int size_chksum = sizeof(header.chksum);            /* 148 */
+   // int size_magic = sizeof(header.magic);              /* 257 */
+   // int size_version = sizeof(header.version);          /* 263 */
+
+    char chksum[8];
+    char version[2];
+    char magic[6];
+    char c[HEADER_SIZE];
+    
+
+    //int start_file = lseek(tar_fd,0,SEEK_SET);
+    read(tar_fd, &c, HEADER_SIZE);
+    //int end_file = lseek(tar_fd,0,SEEK_END);
+    //printf("## End of file: %d ##\n",end_file);
+
+    int i=0;
+    int a=0;
+    int b=0;
+    while (i<HEADER_SIZE)
+    {
+        //checksum
+        if(i>=148 && i<156){
+            chksum[a] = c[i];
+            a++;
+        }
+        //magic
+        if(i>=257 && i<263){
+            magic[b] = c[i];
+            b++;
+            a=0;
+        }
+        //version
+        if(263<=i && i<265){
+            version[a] = c[i];
+            a++;
+        }
+        i++;
+    }
+    printf("\n");
+    printf("checksum: %s\n",chksum);
+    printf("magic: %s\n",magic);
+    printf("version: %c\n",(int)* version);
+
+    //Verifier si il est non null aussi ????
+    if(strcmp(magic,TMAGIC)!=0) return -1;
+    //if(strcmp(version,TVERSION)!=0) return -2;
+
 
     return 0;
 }
@@ -42,10 +86,6 @@ int check_archive(int tar_fd) {
  *         any other value otherwise.
  */
 int exists(int tar_fd, char *path) {
-    off_t position=lseek(tar_fd, 0, SEEK_SET);
-    if(position==-1){
-        return -1;
-    }
     return 0;
 }
 
