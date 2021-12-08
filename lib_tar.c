@@ -1,4 +1,8 @@
 #include "lib_tar.h"
+#include <sys/types.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 /**
  * Checks whether the archive is valid.
@@ -16,6 +20,15 @@
  *         -3 if the archive contains a header with an invalid checksum value
  */
 int check_archive(int tar_fd) {
+    char *c = (char *) malloc(sizeof(char));
+
+    int start_file = lseek(tar_fd,0,SEEK_SET);
+    printf("## Start of file: %d ##\n",start_file);
+    read(tar_fd, c, 100);
+    printf("Contenu du fichier : %s\n",c);
+    int end_file = lseek(tar_fd,0,SEEK_END);
+    printf("## End of file: %d ##\n",end_file);
+
     return 0;
 }
 
