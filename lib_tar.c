@@ -6,6 +6,20 @@
 #include <string.h>
 
 #define HEADER_SIZE 512
+
+
+static unsigned int oct2uint(const char* str, unsigned int len) {
+	unsigned int ret = 0;
+	unsigned int i;
+	for (i = 0; i < len; i++) {
+		char c = str[i];
+		if (!c) break;
+		ret *= 8;
+		ret += c - '0';
+	}
+	return ret;
+}
+
 /**
  * Checks whether the archive is valid.
  *
@@ -23,28 +37,29 @@
  */
 int check_archive(int tar_fd) {
 
-   // struct posix_header header;
-                                                        /* byte offset */
-   // int size_chksum = sizeof(header.chksum);            /* 148 */
-   // int size_magic = sizeof(header.magic);              /* 257 */
-   // int size_version = sizeof(header.version);          /* 263 */
+   tar_header_t *header = malloc(sizeof(tar_header_t));
 
-    char chksum[8];
-    char version[2];
+   // int size_chksum = sizeof(header->chksum);            /* 148 */
+   // int size_magic = sizeof(header->magic);              /* 257 */
+   // int size_version = sizeof(header->version);          /* 263 */
+
+
+    char chksum[8];  
     char magic[6];
-    char c[HEADER_SIZE];
-    
+    char version[2];
 
-    //int start_file = lseek(tar_fd,0,SEEK_SET);
+    char c[HEADER_SIZE];
+
+    unsigned int c_chksum = 0;
+    
     read(tar_fd, &c, HEADER_SIZE);
-    //int end_file = lseek(tar_fd,0,SEEK_END);
-    //printf("## End of file: %d ##\n",end_file);
 
     int i=0;
     int a=0;
     int b=0;
     while (i<HEADER_SIZE)
     {
+        c_chksum += c[i];
         //checksum
         if(i>=148 && i<156){
             chksum[a] = c[i];
@@ -63,14 +78,17 @@ int check_archive(int tar_fd) {
         }
         i++;
     }
-    printf("\n");
-    printf("checksum: %s\n",chksum);
-    printf("magic: %s\n",magic);
-    printf("version: %c\n",(int)* version);
+    memcpy(&header->magic,magic,6);      
+    memcpy(&header->version,version,2);      
 
-    //Verifier si il est non null aussi ????
-    if(strcmp(magic,TMAGIC)!=0) return -1;
-    //if(strcmp(version,TVERSION)!=0) return -2;
+    printf("checksum: %d\n",oct2uint(chksum,sizeof(chksum)));
+    printf("c_checksum: %d\n",c_chksum);
+
+    printf("magic: %s\n",header->magic);
+    printf("version: %s\n",header->version);
+
+    if(strcmp(header->magic,TMAGIC)!=0) return -1;
+    if(strcmp(header->version,TVERSION)!=0) return -2;
 
 
     return 0;
