@@ -1,0 +1,3 @@
+modifier tar pour rendre invalide
+> hexed.it
+lseek - Positionner la tête de lecture/écriture dans un fichier  
