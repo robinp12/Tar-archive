@@ -29,6 +29,10 @@ int check_archive(int tar_fd) {
  *         any other value otherwise.
  */
 int exists(int tar_fd, char *path) {
+    off_t position=lseek(tar_fd, 0, SEEK_SET);
+    if(position==-1){
+        return -1;
+    }
     return 0;
 }
 
