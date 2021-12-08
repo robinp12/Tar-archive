@@ -6,20 +6,6 @@
 #include <string.h>
 
 #define HEADER_SIZE 512
-
-
-static unsigned int oct2uint(const char* str, unsigned int len) {
-	unsigned int ret = 0;
-	unsigned int i;
-	for (i = 0; i < len; i++) {
-		char c = str[i];
-		if (!c) break;
-		ret *= 8;
-		ret += c - '0';
-	}
-	return ret;
-}
-
 /**
  * Checks whether the archive is valid.
  *
@@ -37,21 +23,15 @@ static unsigned int oct2uint(const char* str, unsigned int len) {
  */
 int check_archive(int tar_fd) {
 
-   tar_header_t *header = malloc(sizeof(tar_header_t));
-
-   // int size_chksum = sizeof(header->chksum);            /* 148 */
-   // int size_magic = sizeof(header->magic);              /* 257 */
-   // int size_version = sizeof(header->version);          /* 263 */
-
+    tar_header_t *header = (tar_header_t*) malloc(sizeof(tar_header_t));
 
     char chksum[8];  
-    char magic[6];
-    char version[2];
+    char magic[TMAGLEN];
+    char version[TVERSLEN];
 
     char c[HEADER_SIZE];
-
-    unsigned int c_chksum = 0;
     
+    unsigned int c_chksum = 0;
     read(tar_fd, &c, HEADER_SIZE);
 
     int i=0;
@@ -59,12 +39,12 @@ int check_archive(int tar_fd) {
     int b=0;
     while (i<HEADER_SIZE)
     {
-        c_chksum += c[i];
         //checksum
         if(i>=148 && i<156){
             chksum[a] = c[i];
             a++;
         }
+        c_chksum += c[i];
         //magic
         if(i>=257 && i<263){
             magic[b] = c[i];
@@ -78,10 +58,11 @@ int check_archive(int tar_fd) {
         }
         i++;
     }
-    memcpy(&header->magic,magic,6);      
-    memcpy(&header->version,version,2);      
 
-    printf("checksum: %d\n",oct2uint(chksum,sizeof(chksum)));
+    memcpy(&header->magic,magic,TMAGLEN);      
+    memcpy(&header->version,version,TVERSLEN);      
+
+    printf("checksum: %ld\n",TAR_INT(chksum));
     printf("c_checksum: %d\n",c_chksum);
 
     printf("magic: %s\n",header->magic);
@@ -89,7 +70,6 @@ int check_archive(int tar_fd) {
 
     if(strcmp(header->magic,TMAGIC)!=0) return -1;
     if(strcmp(header->version,TVERSION)!=0) return -2;
-
 
     return 0;
 }
