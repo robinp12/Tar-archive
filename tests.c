@@ -39,5 +39,8 @@ int main(int argc, char **argv) {
     int ret = check_archive(fd);
     printf("check_archive returned %d\n", ret);
 
+    ret = is_dir(fd,(char*)'/');
+    printf("is_dir returned %d\n", ret);
+
     return 0;
 }

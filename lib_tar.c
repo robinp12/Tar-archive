@@ -6,6 +6,8 @@
 #include <string.h>
 
 #define HEADER_SIZE 512
+tar_header_t *header;
+
 /**
  * Checks whether the archive is valid.
  *
@@ -22,18 +24,19 @@
  *         -3 if the archive contains a header with an invalid checksum value
  */
 int check_archive(int tar_fd) {
+    //TODO verifier le checksum
 
-    tar_header_t *header = (tar_header_t*) malloc(sizeof(tar_header_t));
+    header = (tar_header_t*) malloc(sizeof(tar_header_t));
 
     char chksum[8];  
     char magic[TMAGLEN];
     char version[TVERSLEN];
 
     char c[HEADER_SIZE];
-    
     unsigned int c_chksum = 0;
-    read(tar_fd, &c, HEADER_SIZE);
 
+    read(tar_fd, &c, HEADER_SIZE);
+    
     int i=0;
     int a=0;
     int b=0;
@@ -84,6 +87,10 @@ int check_archive(int tar_fd) {
  *         any other value otherwise.
  */
 int exists(int tar_fd, char *path) {
+    off_t position=lseek(tar_fd, 0, SEEK_SET);
+    if(position==-1){
+        return -1;
+    }
     return 0;
 }
 
@@ -97,7 +104,18 @@ int exists(int tar_fd, char *path) {
  *         any other value otherwise.
  */
 int is_dir(int tar_fd, char *path) {
-    return 0;
+
+    char c[HEADER_SIZE];
+
+    memcpy(&header->typeflag,&c[156],1);
+
+    if(header->typeflag != DIRTYPE){
+        printf("is_dir : false : (%s)\n",&header->typeflag);
+        return 0;
+    }else{
+        printf("is_dir : true (%s)\n",&header->typeflag);
+        return 1;
+    }
 }
 
 /**
