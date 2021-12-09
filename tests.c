@@ -42,5 +42,11 @@ int main(int argc, char **argv) {
     ret = is_dir(fd,(char*)'/');
     printf("is_dir returned %d\n", ret);
 
+    ret = is_file(fd,(char*)'/');
+    printf("is_file returned %d\n", ret);
+
+    ret = is_symlink(fd,(char*)'/');
+    printf("is_symlink returned %d\n", ret);
+
     return 0;
 }

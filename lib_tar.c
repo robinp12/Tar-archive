@@ -6,6 +6,8 @@
 #include <string.h>
 
 #define HEADER_SIZE 512
+char c[HEADER_SIZE];
+
 tar_header_t *header;
 
 /**
@@ -32,7 +34,6 @@ int check_archive(int tar_fd) {
     char magic[TMAGLEN];
     char version[TVERSLEN];
 
-    char c[HEADER_SIZE];
     unsigned int c_chksum = 0;
 
     read(tar_fd, &c, HEADER_SIZE);
@@ -105,17 +106,9 @@ int exists(int tar_fd, char *path) {
  */
 int is_dir(int tar_fd, char *path) {
 
-    char c[HEADER_SIZE];
-
     memcpy(&header->typeflag,&c[156],1);
 
-    if(header->typeflag != DIRTYPE){
-        printf("is_dir : false : (%s)\n",&header->typeflag);
-        return 0;
-    }else{
-        printf("is_dir : true (%s)\n",&header->typeflag);
-        return 1;
-    }
+    return (header->typeflag != DIRTYPE)?0:1;
 }
 
 /**
@@ -128,7 +121,10 @@ int is_dir(int tar_fd, char *path) {
  *         any other value otherwise.
  */
 int is_file(int tar_fd, char *path) {
-    return 0;
+    
+    memcpy(&header->typeflag,&c[156],1);
+
+    return (header->typeflag != REGTYPE || header->typeflag != AREGTYPE)?0:1;
 }
 
 /**
@@ -140,7 +136,10 @@ int is_file(int tar_fd, char *path) {
  *         any other value otherwise.
  */
 int is_symlink(int tar_fd, char *path) {
-    return 0;
+    
+    memcpy(&header->typeflag,&c[156],1);
+
+    return (header->typeflag != SYMTYPE)?0:1;
 }
 
 
