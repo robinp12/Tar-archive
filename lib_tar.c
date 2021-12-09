@@ -28,7 +28,7 @@ tar_header_t *header;
 int check_archive(int tar_fd) {
     //TODO verifier le checksum
 
-    header = (tar_header_t*) malloc(sizeof(tar_header_t));
+    header = malloc(sizeof(tar_header_t));
 
     char chksum[8];  
     char magic[TMAGLEN];
@@ -72,9 +72,15 @@ int check_archive(int tar_fd) {
     printf("magic: %s\n",header->magic);
     printf("version: %s\n",header->version);
 
-    if(strcmp(header->magic,TMAGIC)!=0) return -1;
-    if(strcmp(header->version,TVERSION)!=0) return -2;
-
+    if(strcmp(header->magic,TMAGIC)!=0){
+        free(header);
+        return -1;
+    }
+    if(strcmp(header->version,TVERSION)!=0){
+        free(header);
+        return -2;
+    }
+    free(header);
     return 0;
 }
 
@@ -106,9 +112,19 @@ int exists(int tar_fd, char *path) {
  */
 int is_dir(int tar_fd, char *path) {
 
+    header = malloc(sizeof(tar_header_t));
+
     memcpy(&header->typeflag,&c[156],1);
 
-    return (header->typeflag != DIRTYPE)?0:1;
+    if(header->typeflag != DIRTYPE){
+        free(header);
+        return 0;
+    }
+    else{
+        free(header);
+        return 1;
+    }
+    
 }
 
 /**
@@ -122,9 +138,18 @@ int is_dir(int tar_fd, char *path) {
  */
 int is_file(int tar_fd, char *path) {
     
+    header = malloc(sizeof(tar_header_t));
+
     memcpy(&header->typeflag,&c[156],1);
 
-    return (header->typeflag != REGTYPE || header->typeflag != AREGTYPE)?0:1;
+    if(header->typeflag != REGTYPE || header->typeflag != AREGTYPE){
+        free(header);
+        return 0;
+    }
+    else{
+        free(header);
+        return 1;
+    }
 }
 
 /**
@@ -137,9 +162,18 @@ int is_file(int tar_fd, char *path) {
  */
 int is_symlink(int tar_fd, char *path) {
     
+    header = malloc(sizeof(tar_header_t));
+
     memcpy(&header->typeflag,&c[156],1);
 
-    return (header->typeflag != SYMTYPE)?0:1;
+    if(header->typeflag != SYMTYPE){
+        free(header);
+        return 0;
+    }
+    else{
+        free(header);
+        return 1;
+    }
 }
 
 
