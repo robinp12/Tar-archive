@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    int ret = check_archive(fd);
+    /*int ret = check_archive(fd);
     printf("check_archive returned %d\n", ret);
 
     ret = is_dir(fd,(char*)'/');
@@ -46,7 +46,11 @@ int main(int argc, char **argv) {
     printf("is_file returned %d\n", ret);
 
     ret = is_symlink(fd,(char*)'/');
-    printf("is_symlink returned %d\n", ret);
+    printf("is_symlink returned %d\n", ret);*/
+
+    int ret = exists(fd, "est.c");
+    printf("exists returned %d\n", ret);
+
 
     return 0;
 }

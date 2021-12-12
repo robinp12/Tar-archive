@@ -96,17 +96,53 @@ int check_archive(int tar_fd) {
 int exists(int tar_fd, char *path) {
     off_t position=lseek(tar_fd, 0, SEEK_SET);
     if(position==-1){
+        printf("position failed\n");
         return -1;
     }
-    char *byte_to_read[512];
-    int n = read(tar_fd, byte_to_read, 512);
-    if(n<0) return -1;
-    for (int i = 0; i < 512; i++)
-    {
-        printf("%c", byte_to_read);
+    header = malloc(sizeof(tar_header_t));
+    int n=512;
+    while((read(tar_fd, &c,HEADER_SIZE)) > 0){
+        //printf("%s\n", byte_to_read);
+        //printf("%s\n", c);
+        int i= 0;
+        int sizing=0;
+        int nbr_blocs=0;
+        while(i<512){
+            if(i>=0 && i<100){
+                header->name[i]=c[i];
+            } else if (i>=124 && i<136){
+                header->size[sizing]=c[i];
+                sizing++;
+            }
+            i++;
+        }
+        if (*(header->size)!=0)
+        {
+            int siz = *(header->size);
+            float number_blocs= siz/512.00;
+            if(number_blocs != (int) number_blocs){
+                nbr_blocs=(int) number_blocs +1;
+            } else {
+                nbr_blocs=(int) number_blocs;
+            }
+        }
+        //read(tar_fd, &c,512*nbr_blocs);
+        n=512*nbr_blocs;
+
+        position=lseek(tar_fd, n, SEEK_CUR);
+        if(position==-1){
+            printf("position failed\n");
+            return -1;
+        }
+        
+        printf("Taille du prochain bloc: %d\nNombre de blocs à passer: %d\nNom du fichier: %s\n\n\n", *(header->size),nbr_blocs, header->name);
+        /*if(*byte_to_read == *path){
+            printf("here\nce qu'on lit: %s\nce qu'on cherche: %s\n%d\n%d\n", byte_to_read, path, *byte_to_read, *path);
+            return *path;
+        }*/
     }
     
-
+    free(header);
     return 0;
 }
 
