@@ -26,7 +26,6 @@ tar_header_t *header;
  *         -3 if the archive contains a header with an invalid checksum value
  */
 int check_archive(int tar_fd) {
-    //TODO verifier le checksum
 
     header = malloc(sizeof(tar_header_t));
 
@@ -34,21 +33,25 @@ int check_archive(int tar_fd) {
     char magic[TMAGLEN];
     char version[TVERSLEN];
 
-    unsigned int c_chksum = 0;
+    int c_chksum = 0;
 
     read(tar_fd, &c, HEADER_SIZE);
     
     int i=0;
     int a=0;
     int b=0;
-    while (i<HEADER_SIZE)
-    {
+    while (i<HEADER_SIZE){
         //checksum
         if(i>=148 && i<156){
             chksum[a] = c[i];
             a++;
         }
-        c_chksum += c[i];
+        if(i<148 || i>155){ 
+            c_chksum += c[i];
+		}
+        else{
+            c_chksum += ' ';
+        }
         //magic
         if(i>=257 && i<263){
             magic[b] = c[i];
@@ -65,12 +68,12 @@ int check_archive(int tar_fd) {
 
     memcpy(&header->magic,magic,TMAGLEN);      
     memcpy(&header->version,version,TVERSLEN);      
+    memcpy(&header->chksum,chksum,8);      
 
-    printf("checksum: %ld\n",TAR_INT(chksum));
-    printf("c_checksum: %d\n",c_chksum);
 
     printf("magic: %s\n",header->magic);
     printf("version: %s\n",header->version);
+    printf("checksum: %ld\n",TAR_INT(chksum));
 
     if(strcmp(header->magic,TMAGIC)!=0){
         free(header);
@@ -80,6 +83,11 @@ int check_archive(int tar_fd) {
         free(header);
         return -2;
     }
+    if(TAR_INT(chksum)!= c_chksum){
+        free(header);
+        return -3;
+    }
+
     free(header);
     return 0;
 }
