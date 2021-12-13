@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     ret = is_symlink(fd,(char*)'/');
     printf("is_symlink returned %d\n", ret);*/
 
-    int ret = exists(fd, "est.c");
+    int ret = exists(fd, "lib_tar.c");
     printf("exists returned %d\n", ret);
 
 

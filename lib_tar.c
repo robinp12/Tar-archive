@@ -101,45 +101,47 @@ int exists(int tar_fd, char *path) {
     }
     header = malloc(sizeof(tar_header_t));
     int n=512;
+    // Lecture de tout les blocs du fichier TAR
     while((read(tar_fd, &c,HEADER_SIZE)) > 0){
-        //printf("%s\n", byte_to_read);
-        //printf("%s\n", c);
         int i= 0;
         int sizing=0;
         int nbr_blocs=0;
-        while(i<512){
+        while(i<200){
             if(i>=0 && i<100){
+                //printf("i NAME== %d\n", c[i]);
                 header->name[i]=c[i];
             } else if (i>=124 && i<136){
+                //printf("i SIZE== %d\n", c[i]);
                 header->size[sizing]=c[i];
                 sizing++;
             }
             i++;
         }
+
+        // Calcul du nombre de bloc à passer si size n'est pas égale à 0 et que du coup, il y a des blocs de data
         if (*(header->size)!=0)
         {
-            int siz = *(header->size);
+            int siz = TAR_INT(header->size);
             float number_blocs= siz/512.00;
             if(number_blocs != (int) number_blocs){
                 nbr_blocs=(int) number_blocs +1;
             } else {
                 nbr_blocs=(int) number_blocs;
             }
-        }
-        //read(tar_fd, &c,512*nbr_blocs);
-        n=512*nbr_blocs;
+            
+            n=512*nbr_blocs;
 
-        position=lseek(tar_fd, n, SEEK_CUR);
-        if(position==-1){
-            printf("position failed\n");
-            return -1;
+            position=lseek(tar_fd, n, SEEK_CUR);
+            if(position==-1){
+                printf("position failed\n");
+                return -1;
+            }
         }
         
-        printf("Taille du prochain bloc: %d\nNombre de blocs à passer: %d\nNom du fichier: %s\n\n\n", *(header->size),nbr_blocs, header->name);
-        /*if(*byte_to_read == *path){
-            printf("here\nce qu'on lit: %s\nce qu'on cherche: %s\n%d\n%d\n", byte_to_read, path, *byte_to_read, *path);
+        //Comparaison entre notre nom de fichier et le nom qu'on cherche
+        if(strcmp(header->name,path)==0){
             return *path;
-        }*/
+        }
     }
     
     free(header);
