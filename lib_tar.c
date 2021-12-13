@@ -179,7 +179,7 @@ int is_dir(int tar_fd, char *path) {
         int i= 0;
         int sizing=0;
         int nbr_blocs=0;
-        int flag=0;
+        
         while(i<200){
             if(i>=0 && i<100){
                 //printf("i NAME== %d\n", c[i]);
@@ -213,7 +213,7 @@ int is_dir(int tar_fd, char *path) {
             }
         }
 
-        printf("Typeflag: %d\nDir typeflag: %d\n", header->typeflag, DIRTYPE);
+        //printf("Typeflag: %d\nDir typeflag: %d\nName of file: %s\nName vs path: %d\nTypeflag vs dir_type: %d\n\n\n", header->typeflag, DIRTYPE, header->name, strcmp(header->name,path), header->typeflag==DIRTYPE);
         
         //Comparaison entre notre nom de fichier et le nom qu'on cherche
         if(strcmp(header->name,path)==0 && header->typeflag==DIRTYPE){
@@ -236,20 +236,64 @@ int is_dir(int tar_fd, char *path) {
  * @return zero if no entry at the given path exists in the archive or the entry is not a file,
  *         any other value otherwise.
  */
-int is_file(int tar_fd, char *path) {
-    
+int is_file(int tar_fd, char *path) {  
+    off_t position=lseek(tar_fd, 0, SEEK_SET);
+    if(position==-1){
+        printf("position failed\n");
+        return -1;
+    }
     header = malloc(sizeof(tar_header_t));
+    int n=512;
+    // Lecture de tout les blocs du fichier TAR
+    while((read(tar_fd, &c,HEADER_SIZE)) > 0){
+        int i= 0;
+        int sizing=0;
+        int nbr_blocs=0;
+        
+        while(i<200){
+            if(i>=0 && i<100){
+                //printf("i NAME== %d\n", c[i]);
+                header->name[i]=c[i];
+            } else if (i>=124 && i<136){
+                //printf("i SIZE== %d\n", c[i]);
+                header->size[sizing]=c[i];
+                sizing++;
+            }
+            i++;
+        }
+        header->typeflag=c[156];
 
-    memcpy(&header->typeflag,&c[156],1);
+        // Calcul du nombre de bloc à passer si size n'est pas égale à 0 et que du coup, il y a des blocs de data
+        if (*(header->size)!=0)
+        {
+            int siz = TAR_INT(header->size);
+            float number_blocs= siz/512.00;
+            if(number_blocs != (int) number_blocs){
+                nbr_blocs=(int) number_blocs +1;
+            } else {
+                nbr_blocs=(int) number_blocs;
+            }
+            
+            n=512*nbr_blocs;
 
-    if(header->typeflag != REGTYPE || header->typeflag != AREGTYPE){
-        free(header);
-        return 0;
+            position=lseek(tar_fd, n, SEEK_CUR);
+            if(position==-1){
+                printf("position failed\n");
+                return -1;
+            }
+        }
+        printf("Areguler typeflag: %d\n", AREGTYPE);
+        printf("Typeflag: %d\nRegular typeflag: %d\nName of file: %s\nName vs path: %d\nTypeflag vs regtype: %d\n\n\n", header->typeflag, REGTYPE, header->name, strcmp(header->name,path), header->typeflag==REGTYPE);
+        
+        //Comparaison entre notre nom de fichier et le nom qu'on cherche
+        if(strcmp(header->name,path)==0 && (header->typeflag==REGTYPE || header->typeflag==AREGTYPE)){
+            free(header);
+            return 1;
+        }
     }
-    else{
-        free(header);
-        return 1;
-    }
+    
+    free(header);
+    return 0;
 }
 
 /**
