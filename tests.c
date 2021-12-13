@@ -51,6 +51,9 @@ int main(int argc, char **argv) {
     int ret = exists(fd, "lib_tar.c");
     printf("exists returned %d\n", ret);
 
+    ret = is_dir(fd, "testing");
+    printf("exists returned %d\n", ret);
+
 
     return 0;
 }
