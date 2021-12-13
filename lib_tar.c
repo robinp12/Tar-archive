@@ -213,8 +213,6 @@ int is_dir(int tar_fd, char *path) {
             }
         }
 
-        //printf("Typeflag: %d\nDir typeflag: %d\nName of file: %s\nName vs path: %d\nTypeflag vs dir_type: %d\n\n\n", header->typeflag, DIRTYPE, header->name, strcmp(header->name,path), header->typeflag==DIRTYPE);
-        
         //Comparaison entre notre nom de fichier et le nom qu'on cherche
         if(strcmp(header->name,path)==0 && header->typeflag==DIRTYPE){
             free(header);
@@ -282,8 +280,6 @@ int is_file(int tar_fd, char *path) {
                 return -1;
             }
         }
-        printf("Areguler typeflag: %d\n", AREGTYPE);
-        printf("Typeflag: %d\nRegular typeflag: %d\nName of file: %s\nName vs path: %d\nTypeflag vs regtype: %d\n\n\n", header->typeflag, REGTYPE, header->name, strcmp(header->name,path), header->typeflag==REGTYPE);
         
         //Comparaison entre notre nom de fichier et le nom qu'on cherche
         if(strcmp(header->name,path)==0 && (header->typeflag==REGTYPE || header->typeflag==AREGTYPE)){
@@ -351,9 +347,7 @@ int is_symlink(int tar_fd, char *path) {
                 return -1;
             }
         }
-        printf("Areguler typeflag: %d\n", AREGTYPE);
-        printf("Typeflag: %d\nRegular typeflag: %d\nName of file: %s\nName vs path: %d\nTypeflag vs regtype: %d\n\n\n", header->typeflag, REGTYPE, header->name, strcmp(header->name,path), header->typeflag==REGTYPE);
-        
+
         //Comparaison entre notre nom de fichier et le nom qu'on cherche
         if(strcmp(header->name,path)==0 && header->typeflag==SYMTYPE){
             free(header);
