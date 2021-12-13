@@ -106,6 +106,15 @@ int exists(int tar_fd, char *path) {
     if(position==-1){
         return -1;
     }
+    char *byte_to_read[512];
+    int n = read(tar_fd, byte_to_read, 512);
+    if(n<0) return -1;
+    for (int i = 0; i < 512; i++)
+    {
+        printf("%c", byte_to_read);
+    }
+    
+
     return 0;
 }
 
