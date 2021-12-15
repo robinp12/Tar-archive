@@ -27,65 +27,66 @@ tar_header_t *header;
  */
 int check_archive(int tar_fd) {
 
-    header = malloc(sizeof(tar_header_t));
-
-    char chksum[8];  
-    char magic[TMAGLEN];
-    char version[TVERSLEN];
-
-    int c_chksum = 0;
-
-    read(tar_fd, &c, HEADER_SIZE);
-    
-    int i=0;
-    int a=0;
-    int b=0;
-    while (i<HEADER_SIZE){
-        //checksum
-        if(i>=148 && i<156){
-            chksum[a] = c[i];
-            a++;
-        }
-        if(i<148 || i>155){ 
-            c_chksum += c[i];
-		}
-        else{
-            c_chksum += ' ';
-        }
-        //magic
-        if(i>=257 && i<263){
-            magic[b] = c[i];
-            b++;
-            a=0;
-        }
-        //version
-        if(263<=i && i<265){
-            version[a] = c[i];
-            a++;
-        }
-        i++;
-    }
-
-    memcpy(&header->magic,magic,TMAGLEN);      
-    memcpy(&header->version,version,TVERSLEN);      
-    memcpy(&header->chksum,chksum,8);      
-
-
-    printf("magic: %s\n",header->magic);
-    printf("version: %s\n",header->version);
-    printf("checksum: %ld\n",TAR_INT(chksum));
-
-    if(strcmp(header->magic,TMAGIC)!=0){
-        free(header);
+    off_t position=lseek(tar_fd, 0, SEEK_SET);
+    if(position==-1){
+        printf("position failed\n");
         return -1;
     }
-    if(strcmp(header->version,TVERSION)!=0){
-        free(header);
-        return -2;
-    }
-    if(TAR_INT(chksum)!= c_chksum){
-        free(header);
-        return -3;
+    header = malloc(sizeof(tar_header_t));
+
+    int n=512;
+
+    while((read(tar_fd, header,HEADER_SIZE)) > 0){
+        int c_chksum = 0;
+        int nbr_blocs=0;
+
+        int i=0;
+        while (i<HEADER_SIZE){
+            char* c = (char*) header+i;
+            //checksum
+            if(i<148 || i>155){ 
+                c_chksum += *c;
+            }
+            else{
+                c_chksum += ' ';
+            }
+            i++;
+        }
+        if(c_chksum==256){
+            break;
+        }
+
+        if(strcmp(header->magic,TMAGIC)!=0){
+            free(header);
+            return -1;
+        }
+        if(TAR_INT(header->version) != TAR_INT(TVERSION)){
+            free(header);
+            return -2;
+        }
+        if(TAR_INT(header->chksum)!= c_chksum){
+            free(header);
+            return -3;
+        }
+        // Calcul du nombre de bloc à passer si size n'est pas égale à 0 et que du coup, il y a des blocs de data
+        if (*(header->size)!=0)
+        {
+            int siz = TAR_INT(header->size);
+            float number_blocs= siz/512.00;
+            if(number_blocs != (int) number_blocs){
+                nbr_blocs=(int) number_blocs +1;
+            } else {
+                nbr_blocs=(int) number_blocs;
+            }
+            
+            n=512*nbr_blocs;
+
+            position=lseek(tar_fd, n, SEEK_CUR);
+            if(position==-1){
+                printf("position failed\n");
+                return -1;
+            }
+        }
     }
 
     free(header);
@@ -308,7 +309,7 @@ int is_symlink(int tar_fd, char *path) {
         return -1;
     }
     header = malloc(sizeof(tar_header_t));
-    int n=512;
+    int n=512; 
     // Lecture de tout les blocs du fichier TAR
     while((read(tar_fd, &c,HEADER_SIZE)) > 0){
         int i= 0;
@@ -317,7 +318,7 @@ int is_symlink(int tar_fd, char *path) {
         
         while(i<200){
             if(i>=0 && i<100){
-                //printf("i NAME== %d\n", c[i]);
+                printf("i NAME== %d\n", c[i]);
                 header->name[i]=c[i];
             } else if (i>=124 && i<136){
                 //printf("i SIZE== %d\n", c[i]);
