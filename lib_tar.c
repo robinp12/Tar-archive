@@ -320,7 +320,6 @@ int is_symlink(int tar_fd, char *path) {
         
         while(i<200){
             if(i>=0 && i<100){
-                printf("i NAME== %d\n", c[i]);
                 header->name[i]=c[i];
             } else if (i>=124 && i<136){
                 //printf("i SIZE== %d\n", c[i]);
@@ -386,37 +385,54 @@ int is_symlink(int tar_fd, char *path) {
  *         any other value otherwise.
  */
 int list(int tar_fd, char *path, char **entries, size_t *no_entries) {
+
+    if(is_dir(tar_fd,path)==0 && is_symlink(tar_fd,path)==0) {
+        *no_entries=0;
+        return 0;
+    }
+
     off_t position=lseek(tar_fd, 0, SEEK_SET);
     if(position==-1){
         printf("position failed\n");
-        return -1;
+        return -3;
     }
+
     header = malloc(sizeof(tar_header_t));
-    int n=512;
-    // Lecture de tout les blocs du fichier TAR
-    while((read(tar_fd, &c,HEADER_SIZE)) > 0){
-        int i= 0;
-        int sizing=0;
+
+    int index = 0;
+
+    int n=HEADER_SIZE;
+    int size;
+
+    while(read(tar_fd,header, HEADER_SIZE)>0){
+
         int nbr_blocs=0;
-        
-        while(i<200){
-            if(i>=0 && i<100){
-                //printf("i NAME== %d\n", c[i]);
-                header->name[i]=c[i];
-            } else if (i>=124 && i<136){
-                //printf("i SIZE== %d\n", c[i]);
-                header->size[sizing]=c[i];
-                sizing++;
-            }
-            i++;
+        size=TAR_INT(header->size);
+
+        if (strcmp(path, header->name) == 0 && header->typeflag==SYMTYPE) {
+            char* pathCpy = malloc(strlen(header->linkname));
+            strcpy(pathCpy,header->linkname);
+            lseek(tar_fd,0,SEEK_SET);
+            char* pathToFind = malloc(100);
+            free(pathCpy);
+            return list(tar_fd,pathToFind,entries,no_entries);
         }
-        header->typeflag=c[156];
+
+        if(path[strlen(path)-1] != '/') {
+            // check le repertoire
+            char * slash = "/\0";
+
+            char *strToCmp = strcat(path, slash);
+
+            if (strcmp(path, strToCmp) == 0 && *no_entries>index) {
+                strcpy(entries[index],header->name);
+                index++;
+            }
+        }
 
         // Calcul du nombre de bloc à passer si size n'est pas égale à 0 et que du coup, il y a des blocs de data
-        if (*(header->size)!=0)
-        {
-            int siz = TAR_INT(header->size);
-            float number_blocs= siz/512.00;
+        if (*(header->size)!=0){
+            float number_blocs= size/512.00;
             if(number_blocs != (int) number_blocs){
                 nbr_blocs=(int) number_blocs +1;
             } else {
@@ -428,19 +444,14 @@ int list(int tar_fd, char *path, char **entries, size_t *no_entries) {
             position=lseek(tar_fd, n, SEEK_CUR);
             if(position==-1){
                 printf("position failed\n");
-                return -1;
+                return -3;
             }
         }
-
-        //Comparaison entre notre nom de fichier et le nom qu'on cherche
-        if(strcmp(header->name,path)==0 && header->typeflag==SYMTYPE){
-            free(header);
-            return 1;
-        }
     }
-    
+    *no_entries=index;
+    lseek(tar_fd,0,SEEK_SET);
     free(header);
-    return 0;
+    return 1;
 }
 
 /**
@@ -463,84 +474,5 @@ int list(int tar_fd, char *path, char **entries, size_t *no_entries) {
  */
 ssize_t read_file(int tar_fd, char *path, size_t offset, uint8_t *dest, size_t *len) {
 
-    
-    off_t position=lseek(tar_fd, 0, SEEK_SET);
-    int siz;
-    if(position==-1){
-        printf("position failed\n");
-        return -3;
-    }
-    header = malloc(sizeof(tar_header_t));
-    int n=512;
-    // Lecture de tout les blocs du fichier TAR
-    while((read(tar_fd, &c,HEADER_SIZE)) > 0){
-        int i= 0;
-        int sizing=0;
-        int nbr_blocs=0;
-        
-        while(i<200){
-            if(i>=0 && i<100){
-                //printf("i NAME== %d\n", c[i]);
-                header->name[i]=c[i];
-            } else if (i>=124 && i<136){
-                //printf("i SIZE== %d\n", c[i]);
-                header->size[sizing]=c[i];
-                sizing++;
-            }
-            i++;
-        }
-        header->typeflag=c[156];
-
-        printf("Path: %s\nName: %s\nSize of the file: %d\n\n", path, header->name, (int) TAR_INT(header->size));
-        //Comparaison entre notre nom de fichier et le nom qu'on cherche
-        if(strcmp(header->name,path)==0 && (header->typeflag==REGTYPE || header->typeflag==AREGTYPE)){
-            break;
-        }
-
-        // Calcul du nombre de bloc à passer si size n'est pas égale à 0 et que du coup, il y a des blocs de data
-        if (*(header->size)!=0)
-        {
-            siz = TAR_INT(header->size);
-            float number_blocs= siz/512.00;
-            if(number_blocs != (int) number_blocs){
-                nbr_blocs=(int) number_blocs +1;
-            } else {
-                nbr_blocs=(int) number_blocs;
-            }
-            
-            n=512*nbr_blocs;
-
-            position=lseek(tar_fd, n, SEEK_CUR);
-            if(position==-1){
-                printf("position failed\n");
-                return -3;
-            }
-        }
-    }
-
-    if(!(strcmp(header->name,path)==0 && (header->typeflag==REGTYPE || header->typeflag==AREGTYPE))){
-        free(header);
-        return -1;
-    }
-
-    siz=TAR_INT(header->size);
-
-    printf("finished the loop.\nName: %s\nSize of the file: %d\n\n", header->name, siz);
-
-    // Nous passons la taille du header
-    position=lseek(tar_fd, HEADER_SIZE, SEEK_CUR);
-
-    // Nous lisons la partie qui intéresse l'utilisateur
-    
-    position=lseek(tar_fd, 0, SEEK_CUR);
-    if(position==-1){
-        printf("position failed\n");
-        return -3;
-    }
-
-    read(tar_fd, dest, siz-1);
-    printf("%s", dest);
-    
-    free(header);
     return 0;
 }

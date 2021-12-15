@@ -62,12 +62,6 @@ int main(int argc, char **argv) {
     printf("is_file returned %d\n", ret);*/
     size_t no_entries = 50;
     char **entries = (char**) malloc(no_entries);
-    int i = 0;
-    while(i<no_entries){
-        entries[i] = (char*) malloc(no_entries);
-        entries[i] = (char*) 'b';
-        i++;
-    }
 
     int ret = list(fd,argv[1],entries,&no_entries);
     printf("list returned %d\n", ret);
