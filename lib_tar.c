@@ -113,21 +113,8 @@ int exists(int tar_fd, char *path) {
     header = malloc(sizeof(tar_header_t));
     int n=512;
     // Lecture de tout les blocs du fichier TAR
-    while((read(tar_fd, &c,HEADER_SIZE)) > 0){
-        int i= 0;
-        int sizing=0;
+    while((read(tar_fd, header,HEADER_SIZE)) > 0){
         int nbr_blocs=0;
-        while(i<200){
-            if(i>=0 && i<100){
-                //printf("i NAME== %d\n", c[i]);
-                header->name[i]=c[i];
-            } else if (i>=124 && i<136){
-                //printf("i SIZE== %d\n", c[i]);
-                header->size[sizing]=c[i];
-                sizing++;
-            }
-            i++;
-        }
 
         // Calcul du nombre de bloc à passer si size n'est pas égale à 0 et que du coup, il y a des blocs de data
         if (*(header->size)!=0)
@@ -178,23 +165,8 @@ int is_dir(int tar_fd, char *path) {
     header = malloc(sizeof(tar_header_t));
     int n=512;
     // Lecture de tout les blocs du fichier TAR
-    while((read(tar_fd, &c,HEADER_SIZE)) > 0){
-        int i= 0;
-        int sizing=0;
+    while((read(tar_fd, header,HEADER_SIZE)) > 0){
         int nbr_blocs=0;
-        
-        while(i<200){
-            if(i>=0 && i<100){
-                //printf("i NAME== %d\n", c[i]);
-                header->name[i]=c[i];
-            } else if (i>=124 && i<136){
-                //printf("i SIZE== %d\n", c[i]);
-                header->size[sizing]=c[i];
-                sizing++;
-            }
-            i++;
-        }
-        header->typeflag=c[156];
 
         // Calcul du nombre de bloc à passer si size n'est pas égale à 0 et que du coup, il y a des blocs de data
         if (*(header->size)!=0)
@@ -246,23 +218,8 @@ int is_file(int tar_fd, char *path) {
     header = malloc(sizeof(tar_header_t));
     int n=512;
     // Lecture de tout les blocs du fichier TAR
-    while((read(tar_fd, &c,HEADER_SIZE)) > 0){
-        int i= 0;
-        int sizing=0;
+    while((read(tar_fd, header,HEADER_SIZE)) > 0){
         int nbr_blocs=0;
-        
-        while(i<200){
-            if(i>=0 && i<100){
-                //printf("i NAME== %d\n", c[i]);
-                header->name[i]=c[i];
-            } else if (i>=124 && i<136){
-                //printf("i SIZE== %d\n", c[i]);
-                header->size[sizing]=c[i];
-                sizing++;
-            }
-            i++;
-        }
-        header->typeflag=c[156];
 
         // Calcul du nombre de bloc à passer si size n'est pas égale à 0 et que du coup, il y a des blocs de data
         if (*(header->size)!=0)
@@ -313,23 +270,8 @@ int is_symlink(int tar_fd, char *path) {
     header = malloc(sizeof(tar_header_t));
     int n=512; 
     // Lecture de tout les blocs du fichier TAR
-    while((read(tar_fd, &c,HEADER_SIZE)) > 0){
-        int i= 0;
-        int sizing=0;
+    while((read(tar_fd, header,HEADER_SIZE)) > 0){
         int nbr_blocs=0;
-        
-        while(i<200){
-            if(i>=0 && i<100){
-                printf("i NAME== %d\n", c[i]);
-                header->name[i]=c[i];
-            } else if (i>=124 && i<136){
-                //printf("i SIZE== %d\n", c[i]);
-                header->size[sizing]=c[i];
-                sizing++;
-            }
-            i++;
-        }
-        header->typeflag=c[156];
 
         // Calcul du nombre de bloc à passer si size n'est pas égale à 0 et que du coup, il y a des blocs de data
         if (*(header->size)!=0)
@@ -394,23 +336,8 @@ int list(int tar_fd, char *path, char **entries, size_t *no_entries) {
     header = malloc(sizeof(tar_header_t));
     int n=512;
     // Lecture de tout les blocs du fichier TAR
-    while((read(tar_fd, &c,HEADER_SIZE)) > 0){
-        int i= 0;
-        int sizing=0;
+    while((read(tar_fd, header,HEADER_SIZE)) > 0){
         int nbr_blocs=0;
-        
-        while(i<200){
-            if(i>=0 && i<100){
-                //printf("i NAME== %d\n", c[i]);
-                header->name[i]=c[i];
-            } else if (i>=124 && i<136){
-                //printf("i SIZE== %d\n", c[i]);
-                header->size[sizing]=c[i];
-                sizing++;
-            }
-            i++;
-        }
-        header->typeflag=c[156];
 
         // Calcul du nombre de bloc à passer si size n'est pas égale à 0 et que du coup, il y a des blocs de data
         if (*(header->size)!=0)
@@ -473,23 +400,8 @@ ssize_t read_file(int tar_fd, char *path, size_t offset, uint8_t *dest, size_t *
     header = malloc(sizeof(tar_header_t));
     int n=512;
     // Lecture de tout les blocs du fichier TAR
-    while((read(tar_fd, &c,HEADER_SIZE)) > 0){
-        int i= 0;
-        int sizing=0;
+    while((read(tar_fd, header,HEADER_SIZE)) > 0){
         int nbr_blocs=0;
-        
-        while(i<200){
-            if(i>=0 && i<100){
-                //printf("i NAME== %d\n", c[i]);
-                header->name[i]=c[i];
-            } else if (i>=124 && i<136){
-                //printf("i SIZE== %d\n", c[i]);
-                header->size[sizing]=c[i];
-                sizing++;
-            }
-            i++;
-        }
-        header->typeflag=c[156];
 
         printf("Path: %s\nName: %s\nSize of the file: %d\n\n", path, header->name, (int) TAR_INT(header->size));
         //Comparaison entre notre nom de fichier et le nom qu'on cherche
@@ -529,18 +441,26 @@ ssize_t read_file(int tar_fd, char *path, size_t offset, uint8_t *dest, size_t *
 
     // Nous passons la taille du header
     position=lseek(tar_fd, HEADER_SIZE, SEEK_CUR);
-
-    // Nous lisons la partie qui intéresse l'utilisateur
-    
-    position=lseek(tar_fd, 0, SEEK_CUR);
     if(position==-1){
         printf("position failed\n");
         return -3;
     }
 
-    read(tar_fd, dest, siz-1);
-    printf("%s", dest);
+    // Nous lisons la partie qui intéresse l'utilisateur
+
+    if((siz-offset)>0){
+        position=lseek(tar_fd, offset, SEEK_CUR);
+        if(position==-1){
+            printf("position failed\n");
+            return -3;
+        }
+    } else {
+        return -2;
+    }
+
+    read(tar_fd, dest, *len);
+    printf("bytes restant: %d\noffset: %d", siz-offset-*len, siz-offset);
     
     free(header);
-    return 0;
+    return siz-offset-*len;
 }
