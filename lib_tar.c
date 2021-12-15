@@ -35,6 +35,7 @@ int check_archive(int tar_fd) {
     header = malloc(sizeof(tar_header_t));
 
     int n=512;
+    int nb=0;
 
     while((read(tar_fd, header,HEADER_SIZE)) > 0){
         int c_chksum = 0;
@@ -68,6 +69,7 @@ int check_archive(int tar_fd) {
             free(header);
             return -3;
         }
+        nb++;
         // Calcul du nombre de bloc à passer si size n'est pas égale à 0 et que du coup, il y a des blocs de data
         if (*(header->size)!=0)
         {
@@ -90,7 +92,7 @@ int check_archive(int tar_fd) {
     }
 
     free(header);
-    return 0;
+    return nb;
 }
 
 /**
