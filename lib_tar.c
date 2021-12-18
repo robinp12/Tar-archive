@@ -418,29 +418,30 @@ int list(int tar_fd, char *path, char **entries, size_t *no_entries) {
  */
 ssize_t read_file(int tar_fd, char *path, size_t offset, uint8_t *dest, size_t *len) {
 
-    off_t position=lseek(tar_fd, 0, SEEK_SET);
-    int siz;
-    if(position==-1){
-        printf("position failed\n");
-        return -3;
+    if(is_file(tar_fd, path)==0){
+        return -1;
     }
+    
+    lseek(tar_fd, 0, SEEK_SET);
+   
     header = malloc(sizeof(tar_header_t));
+
+    int size;
     int n=512;
+
     // Lecture de tout les blocs du fichier TAR
     while((read(tar_fd, header,HEADER_SIZE)) > 0){
         int nbr_blocs=0;
 
-        printf("Path: %s\nName: %s\nSize of the file: %d\n\n", path, header->name, (int) TAR_INT(header->size));
-        //Comparaison entre notre nom de fichier et le nom qu'on cherche
-        if(strcmp(header->name,path)==0 && (header->typeflag==REGTYPE || header->typeflag==AREGTYPE)){
+        if(strcmp(header->name,path)==0 ) {
+            printf("Path: %s\nName: %s\nSize of the file: %d\n\n", path, header->name, (int) TAR_INT(header->size));
             break;
         }
-
         // Calcul du nombre de bloc à passer si size n'est pas égale à 0 et que du coup, il y a des blocs de data
         if (*(header->size)!=0)
         {
-            siz = TAR_INT(header->size);
-            float number_blocs= siz/512.00;
+            size = TAR_INT(header->size);
+            float number_blocs= size/512.00;
             if(number_blocs != (int) number_blocs){
                 nbr_blocs=(int) number_blocs +1;
             } else {
@@ -449,45 +450,25 @@ ssize_t read_file(int tar_fd, char *path, size_t offset, uint8_t *dest, size_t *
             
             n=512*nbr_blocs;
 
-            position=lseek(tar_fd, n, SEEK_CUR);
-            if(position==-1){
-                printf("position failed\n");
-                return -3;
-            }
+            lseek(tar_fd, n, SEEK_CUR);
         }
     }
 
-    if(!(strcmp(header->name,path)==0 && (header->typeflag==REGTYPE || header->typeflag==AREGTYPE))){
-        free(header);
-        return -1;
+    size = TAR_INT(header->size);
+    if(size<=offset) return -2;
+    lseek(tar_fd,offset,SEEK_CUR);
+
+    int last = size - offset;
+    int ret = last-*len;
+
+    if(*len>last) {
+        *len = last;
+        ret = 0;
     }
+    printf("bytes restant: %d\n offset: %d\n length: %ld\n", ret, last,*len);
+   
+    read(tar_fd,dest,*len);
 
-    siz=TAR_INT(header->size);
-
-    printf("finished the loop.\nName: %s\nSize of the file: %d\n\n", header->name, siz);
-
-    // Nous passons la taille du header
-    position=lseek(tar_fd, HEADER_SIZE, SEEK_CUR);
-    if(position==-1){
-        printf("position failed\n");
-        return -3;
-    }
-
-    // Nous lisons la partie qui intéresse l'utilisateur
-
-    if((siz-offset)>0){
-        position=lseek(tar_fd, offset, SEEK_CUR);
-        if(position==-1){
-            printf("position failed\n");
-            return -3;
-        }
-    } else {
-        return -2;
-    }
-
-    read(tar_fd, dest, *len);
-    printf("bytes restant: %d\noffset: %d", siz-offset-*len, siz-offset);
-    
     free(header);
-    return siz-offset-*len;
+    return ret;
 }
