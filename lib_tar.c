@@ -329,47 +329,47 @@ int is_symlink(int tar_fd, char *path) {
  */
 int list(int tar_fd, char *path, char **entries, size_t *no_entries) {
 
-    
-    if(is_dir(tar_fd,path)==0 && is_symlink(tar_fd,path)==0) {
-        *no_entries=0;
+    int index = 0;
+    char *slash = "/\0";
+
+
+    // Si c'est pas un dossier on return 0
+    if(is_dir(tar_fd,path)==0) {
+        *no_entries = index;
         return 0;
     }
-
-    off_t position=lseek(tar_fd, 0, SEEK_SET);
-    if(position==-1){
-        printf("position failed\n");
-        return -3;
-    }
+    int sym = is_symlink(tar_fd,path);
 
     header = malloc(sizeof(tar_header_t));
+    
+    // Si c'est un lien symbolic, remplacer le chemin par celui du linkname
+    if(sym!=0){
+        lseek(tar_fd, sym*HEADER_SIZE, SEEK_SET);
+        read(tar_fd,header,HEADER_SIZE);
+        path = header->linkname;
+        strcat(path,slash);
+        printf("oui %s\n",path);
+    }
 
-    int index = 0;
+    lseek(tar_fd, 0, SEEK_SET);
 
     int n=HEADER_SIZE;
     int size;
 
+    //Iteration à travers tout le fichier
     while(read(tar_fd,header, HEADER_SIZE)>0){
 
-        int nbr_blocs=0;
+        // Taille de chacun des headers
         size=TAR_INT(header->size);
+        int nbr_blocs=0;
 
-        if (strcmp(path, header->name) == 0 && header->typeflag==SYMTYPE) {
-            char* pathCpy = malloc(strlen(header->linkname));
-            strcpy(pathCpy,header->linkname);
-            lseek(tar_fd,0,SEEK_SET);
-            char* pathToFind = malloc(100);
-            free(pathCpy);
-            return list(tar_fd,pathToFind,entries,no_entries);
-        }
-
-        if(path[strlen(path)-1] != '/') {
-            // check le repertoire
-            char * slash = "/\0";
-
-            char *strToCmp = strcat(path, slash);
-
-            if (strcmp(path, strToCmp) == 0 && *no_entries>index) {
+        // Verifier si le nom du fichier est plus grand que 0
+        if(strlen(header->name)>0){
+            // Ne prend pas en compte la premiere entrée (qui est le dossier lui meme [car il termine par "/"])
+            if(header->name[strlen(header->name)-1] != '/'){
+                // Retourner la liste des fichiers dans l'argument entries (pour y acceder en dehors ex: dans tests.c)
                 strcpy(entries[index],header->name);
+                // Iterer l'index en fonction du nombre de fichier dans le dossier
                 index++;
             }
         }
@@ -385,17 +385,16 @@ int list(int tar_fd, char *path, char **entries, size_t *no_entries) {
             
             n=512*nbr_blocs;
 
-            position=lseek(tar_fd, n, SEEK_CUR);
-            if(position==-1){
-                printf("position failed\n");
-                return -3;
-            }
+            lseek(tar_fd, n, SEEK_CUR);
         }
     }
+    // Mettre le nombre de fichier dans la variable
     *no_entries=index;
     lseek(tar_fd,0,SEEK_SET);
+
     free(header);
-    return 1;
+    // Retourne le nombre de fichier listé
+    return *no_entries;
 }
 
 /**

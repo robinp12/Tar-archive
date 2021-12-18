@@ -26,8 +26,8 @@ void debug_dump(const uint8_t *bytes, size_t len) {
 }
 
 int main(int argc, char **argv) {
-    size_t len = 512;
-    uint8_t *dest = malloc(len);
+    //size_t len = 512;
+    //uint8_t *dest = malloc(len);
 
     if (argc < 2) {
         printf("Usage: %s tar_file\n", argv[0]);
@@ -60,20 +60,26 @@ int main(int argc, char **argv) {
 
     ret = is_file(fd, "Makefile");
     printf("is_file returned %d\n", ret);*/
-    size_t no_entries = 50;
-    char **entries = (char**) malloc(no_entries);
+    size_t n = 50;
+    size_t *no_entries = &n;
+    char **entries = (char**) malloc(n);
     int i = 0;
-    while(i<no_entries){
-        entries[i] = (char*) malloc(no_entries);
-        entries[i] = (char*) 'b';
+    while(i<n){
+        entries[i] = (char*) malloc(sizeof(char));
         i++;
     }
 
-    int ret = list(fd,argv[1],entries,&no_entries);
-    //printf("list returned %d\n", ret);
+    int ret = list(fd,"test/",entries,no_entries);
+    printf("list returned %d\n", ret);
+    i = 0;
+    while(i<n){
+        printf("%s\n", entries[i]);
+        i++;
+    }
+    free(entries);
 
-    ret = read_file(fd, "lib_tar.c", 50, dest, &len);
-    printf("read_file returned %d\n", ret);
+    //ret = read_file(fd, "lib_tar.c", 50, dest, &len);
+    //printf("read_file returned %d\n", ret);
 
     return 0;
 }
