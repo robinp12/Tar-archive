@@ -356,14 +356,15 @@ int list(int tar_fd, char *path, char **entries, size_t *no_entries) {
     int n=HEADER_SIZE;
     int size;
 
-    //Iteration à travers tout le fichier
+    //Iteration à travers tous les fichiers de l'archive
     while(read(tar_fd,header, HEADER_SIZE)>0){
 
         // Taille de chacun des headers
         size=TAR_INT(header->size);
         int nbr_blocs=0;
 
-        // Verifier si le nom du fichier est plus grand que 0
+        // Prendre seulement les fichiers avec un nom plus grand que 0 dans l'archive
+        //(Ne prendre que les fichiers avec un nom)
         if(strlen(header->name)>0){
             // Ne prend pas en compte la premiere entrée (qui est le dossier lui meme [car il termine par "/"])
             if(header->name[strlen(header->name)-1] != '/'){
@@ -388,7 +389,7 @@ int list(int tar_fd, char *path, char **entries, size_t *no_entries) {
             lseek(tar_fd, n, SEEK_CUR);
         }
     }
-    // Mettre le nombre de fichier dans la variable
+    // Mettre le nombre de fichier dans l'argument pour y acceder en dehors
     *no_entries=index;
     lseek(tar_fd,0,SEEK_SET);
 
