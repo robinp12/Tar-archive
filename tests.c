@@ -26,8 +26,8 @@ void debug_dump(const uint8_t *bytes, size_t len) {
 }
 
 int main(int argc, char **argv) {
-    uint8_t dest;
-    size_t len = 512;
+    //uint8_t dest;
+    //size_t len = 512;
     //size_t len = 512;
     //uint8_t *dest = malloc(len);
     if (argc < 2) {
@@ -60,7 +60,10 @@ int main(int argc, char **argv) {
     printf("is_dir returned %d\n", ret);
 
     ret = is_file(fd, "Makefile");
-    printf("is_file returned %d\n", ret);*/
+    printf("is_file returned %d\n", ret);
+    ret = exists(fd, "lib_tar.c");
+    printf("exists returned %d\n", ret);*/
+
     size_t n = 50;
     size_t *no_entries = &n;
     char **entries = (char**) malloc(n);

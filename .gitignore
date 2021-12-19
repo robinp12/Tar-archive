@@ -2,3 +2,4 @@
 *.tar
 tests
 !test.tar
+.idea/

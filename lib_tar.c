@@ -331,10 +331,40 @@ int list(int tar_fd, char *path, char **entries, size_t *no_entries) {
 
     int index = 0;
     char *slash = "/\0";
+    if(tar_fd<0){
+        *no_entries = index;
+        return 0;
+    }
+
+    if(path==NULL){
+        printf("path is wrong\n");
+        *no_entries = index;
+        return 0;
+    }
+
+    if(*entries==NULL){
+        printf("entries is wrong\n");
+        *no_entries = index;
+        return 0;
+    }
+    printf("%ld\n", *no_entries);
+
+    if(no_entries==NULL && *no_entries>0){
+        printf("no_entries is wrong\n");
+        *no_entries = index;
+        return 0;
+    }
+
+    if(check_archive(tar_fd)<0){
+        printf("check_archive is wrong\n");
+        *no_entries = index;
+        return 0;
+    }
 
 
     // Si c'est pas un dossier on return 0
     if(is_dir(tar_fd,path)==0) {
+        printf("dir is wrong\n");
         *no_entries = index;
         return 0;
     }
@@ -362,16 +392,48 @@ int list(int tar_fd, char *path, char **entries, size_t *no_entries) {
         // Taille de chacun des headers
         size=TAR_INT(header->size);
         int nbr_blocs=0;
+        char *copy_name=malloc(sizeof(char)*(strlen(header->name)+1));
+        strcpy(copy_name,header->name);
+        char delims[]="/";
+        char* word=strtok(copy_name, delims);
+        //printf("Name:\n\tBase: %s\n\tConcat: %s\n\tPath wanted: %s\n\n", header->name, word, path);
 
         // Prendre seulement les fichiers avec un nom plus grand que 0 dans l'archive
         //(Ne prendre que les fichiers avec un nom)
         if(strlen(header->name)>0){
-            // Ne prend pas en compte la premiere entrée (qui est le dossier lui meme [car il termine par "/"])
-            if(header->name[strlen(header->name)-1] != '/'){
-                // Retourner la liste des fichiers dans l'argument entries (pour y acceder en dehors ex: dans tests.c)
-                strcpy(entries[index],header->name);
-                // Iterer l'index en fonction du nombre de fichier dans le dossier
-                index++;
+            if(strcmp(strcat(word, "/"),path)==0){
+                int testing =0;
+                strcpy(copy_name,header->name);
+                word=strtok(copy_name, delims);
+                //printf("1ERE: entries from loop: %s\n", word);
+                word=strtok(NULL, delims);
+                printf("Name: %s\nword: %s \n\n\n", header->name, word);
+                if(!word){
+                    printf("AM IN \n");
+                    testing=1;
+                }
+                //printf("2EME entries from loop: %s\n\n", word);
+                for(int i=0; i<sizeof(entries); i++){
+                    char * copy_entry=malloc(sizeof(entries[i]));
+                    strcpy(copy_entry,entries[i]);
+                    char * strToken=strtok(copy_entry, delims);
+                    strToken=strtok(NULL, delims);
+                    if(word && strToken){
+                        if (strcmp(strToken, word)==0)
+                        {
+                            testing=1;
+                            //printf("entries: %s\n", entries[i]);
+                        }
+                    }
+                    
+                }
+                if(testing==0){
+                    //printf("HEADER NAME: %s\n\n\n", header->name);
+                    // Retourner la liste des fichiers dans l'argument entries (pour y acceder en dehors ex: dans tests.c)
+                    strcpy(entries[index],header->name);
+                    // Iterer l'index en fonction du nombre de fichier dans le dossier
+                    index++;
+                }
             }
         }
 
