@@ -25,8 +25,8 @@ void debug_dump(const uint8_t *bytes, size_t len) {
 }
 
 int main(int argc, char **argv) {
-    //uint8_t dest;
-    //size_t len = 512;
+    uint8_t dest;
+    size_t len = 512;
     if (argc < 2) {
         printf("Usage: %s tar_file\n", argv[0]);
         return -1;
@@ -57,10 +57,10 @@ int main(int argc, char **argv) {
     printf("is_dir returned %d\n", ret);
 
     ret = is_file(fd, "Makefile");
-    printf("is_file returned %d\n", ret);
+    printf("is_file returned %d\n", ret);*/
 
-    int ret = read_file(fd, "lib_tar.c", 50, &dest, &len);
-    printf("read_file returned %d\n", ret);*/
+    ret = read_file(fd, "lib_tar.c", 50, &dest, &len);
+    printf("read_file returned %d\n", ret);
 
     return 0;
 }

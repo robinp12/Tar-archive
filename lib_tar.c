@@ -389,6 +389,7 @@ int list(int tar_fd, char *path, char **entries, size_t *no_entries) {
  *
  */
 ssize_t read_file(int tar_fd, char *path, size_t offset, uint8_t *dest, size_t *len) {
+    printf("1ER ESSAI: offset: %ld\nlength: %ld\n",offset, *len);
 
     
     off_t position=lseek(tar_fd, 0, SEEK_SET);
@@ -438,6 +439,7 @@ ssize_t read_file(int tar_fd, char *path, size_t offset, uint8_t *dest, size_t *
     siz=TAR_INT(header->size);
 
     printf("finished the loop.\nName: %s\nSize of the file: %d\n\n", header->name, siz);
+    printf("2 EME ESSAI: offset: %ld\nlength: %ld\n",offset, *len);
 
     // Nous passons la taille du header
     position=lseek(tar_fd, HEADER_SIZE, SEEK_CUR);
@@ -457,9 +459,10 @@ ssize_t read_file(int tar_fd, char *path, size_t offset, uint8_t *dest, size_t *
     } else {
         return -2;
     }
+    printf("3 EME ESSAI: offset: %ld\nlength: %ld\n",offset, *len);
 
     read(tar_fd, dest, *len);
-    printf("bytes restant: %d\noffset: %d", siz-offset-*len, siz-offset);
+    printf("4 EME ESSAI: offset: %ld\nlength: %ld\n",offset, *len);
     
     free(header);
     return siz-offset-*len;
