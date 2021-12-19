@@ -293,10 +293,14 @@ int is_symlink(int tar_fd, char *path) {
             }
         }
 
+        //printf("SYMLINK:\n\tTypeflag: %d\nName:%s\n\n", header->typeflag, header->name);
+
         //Comparaison entre notre nom de fichier et le nom qu'on cherche
-        if(strcmp(header->name,path)==0 && header->typeflag==SYMTYPE){
-            free(header);
-            return 1;
+        if(strcmp(header->name,path)==0){
+            if(header->typeflag==SYMTYPE || header->typeflag==LNKTYPE){
+                free(header);
+                return 1;
+            }
         }
     }
     
@@ -361,26 +365,24 @@ int list(int tar_fd, char *path, char **entries, size_t *no_entries) {
         return 0;
     }
 
-
-    // Si c'est pas un dossier on return 0
-    if(is_dir(tar_fd,path)==0) {
-        printf("dir is wrong\n");
-        *no_entries = index;
-        return 0;
-    }
     int sym = is_symlink(tar_fd,path);
 
     header = malloc(sizeof(tar_header_t));
+    printf("linkname: %s\n", header->linkname);
     
     // Si c'est un lien symbolic, remplacer le chemin par celui du linkname
     if(sym!=0){
         lseek(tar_fd, sym*HEADER_SIZE, SEEK_SET);
         read(tar_fd,header,HEADER_SIZE);
+        printf("IN SYMLINK\n\nLinkname: %s\n",header->linkname);
         path = header->linkname;
         strcat(path,slash);
         printf("oui %s\n",path);
+    } else if (is_dir(tar_fd,path)==0) {
+        printf("dir is wrong\n");
+        *no_entries = index;
+        return 0;
     }
-
     lseek(tar_fd, 0, SEEK_SET);
 
     int n=HEADER_SIZE;
@@ -407,9 +409,9 @@ int list(int tar_fd, char *path, char **entries, size_t *no_entries) {
                 word=strtok(copy_name, delims);
                 //printf("1ERE: entries from loop: %s\n", word);
                 word=strtok(NULL, delims);
-                printf("Name: %s\nword: %s \n\n\n", header->name, word);
+                //printf("Name: %s\nword: %s \n\n\n", header->name, word);
                 if(!word){
-                    printf("AM IN \n");
+                    //printf("AM IN \n");
                     testing=1;
                 }
                 //printf("2EME entries from loop: %s\n\n", word);

@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
         i++;
     }
 
-    int ret = list(fd,"test/",entries,no_entries);
+    int ret = list(fd,"S1_exo6",entries,no_entries);
     printf("list returned %d\n", ret);
     i = 0;
     while(i<n){
